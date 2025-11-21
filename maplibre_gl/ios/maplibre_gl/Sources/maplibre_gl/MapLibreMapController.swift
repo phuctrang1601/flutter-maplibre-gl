@@ -152,6 +152,14 @@ class MapLibreMapController: NSObject, FlutterPlatformView, MLNMapViewDelegate, 
             mapView.addGestureRecognizer(longPress)
             longPressRecognizerAdded = true
         }
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            if let style = self.mapView.style {
+                // Style loaded before delegate was set, trigger callback manually
+                self.mapView(self.mapView, didFinishLoading: style)
+            }
+        }
     }
 
     func gestureRecognizer(
