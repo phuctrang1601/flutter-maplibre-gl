@@ -39,30 +39,32 @@ class MapLibreMapController: NSObject, FlutterPlatformView, MLNMapViewDelegate, 
         frame: CGRect,
         registrar: FlutterPluginRegistrar
     ) -> MLNMapView {
-        if let args = args as? [String: Any],
-            let styleString = args["styleString"] as? String
-        {
-            if Self.styleStringIsJSON(styleString) {
-                return MLNMapView(frame: frame, styleJSON: styleString)
-            }
+        if let args = args as? [String: Any] {
+            if let styleString = args["styleString"] as? String, !styleString.isEmpty {
+                NSLog("MapLibreMapController - Creating map with styleString: \(styleString.prefix(100))...")
+                
+                if Self.styleStringIsJSON(styleString) {
+                    NSLog("MapLibreMapController - Using JSON style")
+                    return MLNMapView(frame: frame, styleJSON: styleString)
+                }
 
-            if let url = Self.styleStringAsURL(
-                styleString,
-                registrar: registrar
-            ) {
-                return MLNMapView(frame: frame, styleURL: url)
+                if let url = Self.styleStringAsURL(styleString, registrar: registrar) {
+                    NSLog("MapLibreMapController - Using style URL: \(url)")
+                    return MLNMapView(frame: frame, styleURL: url)
+                }
+                
+                NSLog("MapLibreMapController - ERROR: styleString provided but could not be parsed: \(styleString)")
+            } else {
+                NSLog("MapLibreMapController - WARNING: No styleString in args or empty string")
             }
+        } else {
+            NSLog("MapLibreMapController - WARNING: No args provided")
         }
 
-        // Fallback to default if neither JSON nor valid URL
-        NSLog(
-            """
-            Warning: MapLibreMapController - Initializing map view with \
-            default style. This capability will be removed in a future release.
-            """
-        )
-        // https://github.com/maplibre/maplibre-native/issues/709
-        return MLNMapView(frame: frame)
+        // Fallback to default style if neither JSON nor valid URL
+        NSLog("MapLibreMapController - Using default demo style as fallback")
+        let defaultStyleURL = URL(string: "https://demotiles.maplibre.org/style.json")!
+        return MLNMapView(frame: frame, styleURL: defaultStyleURL)
     }
 
     init(
